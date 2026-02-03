@@ -32,9 +32,41 @@ class ViewController: UIViewController {
     // player labels arr for palyer buttons
     var playerLabels: [UILabel] = []
     
+    // for history
+    var gameHistory: [String] = []
+    
     // create players dynamically
     // A list to keep track of the text fields so you can read their values
     var playerInputFields: [UITextField] = []
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .white // Set background color
+        
+        setupMainStack()
+        
+        // hide loss label
+        playerLost.isHidden = true
+        
+        // setup the "Add Player" button
+        addPlayerButton.setTitle("Add Player", for: .normal)
+        addPlayerButton.addTarget(self, action: #selector(addNewPlayer), for: .touchUpInside)
+        
+        // setup "view history" button
+        let historyButton = UIButton(type: .system)
+        historyButton.setTitle("View History", for: .normal)
+        historyButton.addTarget(self, action: #selector(showHistory), for: .touchUpInside)
+        mainStackView.addArrangedSubview(historyButton)
+            
+        // add it to the top of your stack
+        mainStackView.insertArrangedSubview(addPlayerButton, at: 0)
+        
+        // create starting 4 players
+        for i in 0..<players.count {
+            addPlayerToUI(playerIndex: i)
+        }
+    }
+    
 
     func addPlayerToUI(playerIndex: Int) {
         let player = players[playerIndex]
@@ -85,28 +117,6 @@ class ViewController: UIViewController {
         }
     }
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .white // Set background color
-        
-        setupMainStack()
-        
-        // hide loss label
-        playerLost.isHidden = true
-        
-        // Setup the "Add Player" button
-        addPlayerButton.setTitle("Add Player", for: .normal)
-        addPlayerButton.addTarget(self, action: #selector(addNewPlayer), for: .touchUpInside)
-            
-        // Add it to the top of your stack
-        mainStackView.insertArrangedSubview(addPlayerButton, at: 0)
-        
-        // create starting 4 players
-        for i in 0..<players.count {
-            addPlayerToUI(playerIndex: i)
-        }
-    }
-
     // Helper to set up the programmatic constraints for your stack
     func setupMainStack() {
         mainStackView.axis = .vertical
@@ -139,21 +149,36 @@ class ViewController: UIViewController {
         let amount = Int(amountString) ?? 1
         
         // determine + or -
+        // also get the action for the history log
+        var action = ""
         if sender.currentTitle == "+" {
             players[playerIndex].life += amount
+            action = "gained" // Set action for history
         } else {
             players[playerIndex].life -= amount
+            action = "lost" // Set action for history
         }
+        
+        // create the history string and add it to array
+        let logEntry = "\(players[playerIndex].name) \(action) \(amount) life."
+        gameHistory.append(logEntry)
         
         // update UI and check loss
         updateUI()
         checkLoss()
         
-        // disable addPlayer once game started
+        // disable addPlayer once game started and write disabled next to it
+        addPlayerButton.setTitle("Add Player: Disabled", for: .normal)
         addPlayerButton.isEnabled = false
         
-        // Close the keyboard after clicking
-        view.endEditing(true)
+        // close the keyboard after clicking
+        // view.endEditing(true)
+    }
+    
+    @objc func showHistory() {
+        let historyVC = HistoryViewController()
+        historyVC.historyData = gameHistory // Pass the data to the new screen
+        navigationController?.pushViewController(historyVC, animated: true)
     }
 
     func updateUI() {
@@ -176,6 +201,55 @@ class ViewController: UIViewController {
             playerLost.text = "\(loserNames.joined(separator: ", ")) lost!" // join all the losers together
         } else {
             playerLost.isHidden = true
+        }
+    }
+}
+
+// History Screen
+import UIKit
+
+class HistoryViewController: UIViewController {
+    var historyData: [String] = []
+    let stackView = UIStackView()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .white
+        title = "History"
+        
+        setupUI()
+    }
+
+    func setupUI() {
+        stackView.axis = .vertical
+        stackView.spacing = 10
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Add a scroll view in case the history is long
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(scrollView)
+        scrollView.addSubview(stackView)
+        
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            stackView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+        ])
+        
+        // Create a label for every item in history
+        for entry in historyData {
+            let label = UILabel()
+            label.text = entry
+            label.numberOfLines = 0
+            stackView.addArrangedSubview(label)
         }
     }
 }
