@@ -113,7 +113,8 @@ class ViewController: UIViewController {
         
         // hide button if we hit the limit
         if players.count == 8 {
-            addPlayerButton.isHidden = true
+            addPlayerButton.setTitle("Add Player: Disabled", for: .normal)
+            addPlayerButton.isEnabled = false
         }
     }
 
@@ -231,6 +232,7 @@ class HistoryViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(stackView)
         
+        // constraints for the scroll view
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -244,7 +246,7 @@ class HistoryViewController: UIViewController {
             stackView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
         ])
         
-        // Create a label for every item in history
+        // create a label for every item in history
         for entry in historyData {
             let label = UILabel()
             label.text = entry
